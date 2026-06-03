@@ -62,6 +62,11 @@
     --glow-primary: 195 100% 40% / 0.1;
     --glow-warning: 38 95% 50% / 0.1;
     --glow-success: 152 70% 38% / 0.1;
+
+    /* Mazda brand accents */
+    --soul-red: 358 75% 42%;
+    --soul-red-glow: 358 80% 50%;
+    --slds-brand-dark: 213 90% 19%;
   }
 
   .dark {
@@ -119,6 +124,10 @@
     --glow-primary: 195 100% 50% / 0.15;
     --glow-warning: 38 95% 55% / 0.15;
     --glow-success: 152 70% 45% / 0.15;
+
+    --soul-red: 358 75% 50%;
+    --soul-red-glow: 358 80% 58%;
+    --slds-brand-dark: 213 90% 12%;
   }
 }
 
@@ -136,6 +145,19 @@
 @layer utilities {
   .font-mono-data {
     font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Mazda demo — SLDS-ish utilities */
+  .hairline { border-color: hsl(var(--border)); }
+  .bg-soul-red { background-color: hsl(var(--soul-red)); }
+  .text-soul { color: hsl(var(--soul-red)); }
+  .border-soul { border-color: hsl(var(--soul-red)); }
+  .bg-gradient-soul {
+    background-image: linear-gradient(135deg, hsl(var(--soul-red)), hsl(var(--soul-red-glow)));
+  }
+  .shadow-soul { box-shadow: 0 1px 2px hsl(0 0% 0% / 0.05); }
+  .shadow-card {
+    box-shadow: 0 1px 0 hsl(0 0% 0% / 0.04), 0 0 0 1px hsl(var(--border));
   }
 
   .glass-card {
