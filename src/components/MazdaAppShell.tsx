@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
   Users,
@@ -11,9 +10,6 @@ import {
   Sparkles,
   Search,
   ChevronRight,
-  X,
-  Send,
-  CircleDot,
   Bell,
   Grid3x3,
   HelpCircle,
@@ -24,7 +20,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PersonaProvider, usePersona } from "@/lib/persona-context";
-import { PERSONAS, REASONING, type PersonaId } from "@/lib/mazda-mock";
+import { PERSONAS, type PersonaId } from "@/lib/mazda-mock";
+import AgentforceWidget from "@/components/AgentforceWidget";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -64,7 +61,7 @@ const NAV: Record<PersonaId, { to: string; label: string; icon: React.ComponentT
 };
 
 function Shell() {
-  const { persona, setPersona, reasoningOpen, setReasoningOpen } = usePersona();
+  const { persona, setPersona } = usePersona();
   const p = PERSONAS[persona];
   const location = useLocation();
   const nav = NAV[persona];
@@ -101,14 +98,6 @@ function Shell() {
         <button className="relative h-7 w-7 rounded hover:bg-white/10 flex items-center justify-center" title="Notifications">
           <Bell className="h-3.5 w-3.5" />
           <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-warning" />
-        </button>
-        <button
-          onClick={() => setReasoningOpen(true)}
-          className="h-7 px-2 rounded bg-white/10 hover:bg-white/15 flex items-center gap-1.5"
-          title="Open Agentforce panel"
-        >
-          <Sparkles className="h-3.5 w-3.5 text-[#FFD60A]" />
-          <span className="text-[11px] font-medium">Agentforce</span>
         </button>
         <PersonaMenu value={persona} onChange={setPersona} initials={p.initials} name={p.name} role={p.role} />
       </div>
@@ -149,80 +138,7 @@ function Shell() {
         <Outlet />
       </main>
 
-      <AnimatePresence>
-        {reasoningOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setReasoningOpen(false)}
-              className="fixed inset-0 bg-black/40 z-40"
-            />
-            <motion.aside
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 240 }}
-              className="fixed right-0 top-0 bottom-0 w-full sm:w-[460px] bg-card border-l hairline z-50 flex flex-col shadow-elevated"
-            >
-              <div className="bg-[hsl(var(--slds-brand-dark))] text-white px-5 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded bg-white/15 flex items-center justify-center">
-                    <Sparkles className="h-4 w-4 text-[#FFD60A]" />
-                  </div>
-                  <div className="leading-tight">
-                    <div className="text-sm font-semibold">Agentforce</div>
-                    <div className="text-[11px] text-white/70">{p.agentName} · supervised mode</div>
-                  </div>
-                </div>
-                <button onClick={() => setReasoningOpen(false)} className="text-white/70 hover:text-white">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="flex border-b hairline bg-secondary/40 text-xs">
-                <div className="px-4 py-2 border-b-2 border-primary text-primary font-medium">Reasoning trace</div>
-                <div className="px-4 py-2 text-muted-foreground">Conversation</div>
-                <div className="px-4 py-2 text-muted-foreground">Knowledge</div>
-              </div>
-
-              <div className="flex-1 overflow-auto p-5 space-y-5">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wider">How {p.agentName} decided</p>
-                {REASONING[persona].map((step, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                    className="relative pl-6"
-                  >
-                    <div className="absolute left-0 top-1.5 h-3 w-3 rounded-full bg-primary" />
-                    {i < REASONING[persona].length - 1 && (
-                      <div className="absolute left-[5px] top-5 bottom-[-20px] w-px bg-border" />
-                    )}
-                    <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Step {i + 1}</div>
-                    <div className="text-sm font-medium">{step.step}</div>
-                    <p className="text-sm text-muted-foreground mt-1">{step.detail}</p>
-                    <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-primary">
-                      <CircleDot className="h-2.5 w-2.5" />
-                      {step.source}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-              <div className="p-4 border-t hairline bg-secondary/30">
-                <div className="rounded bg-card border hairline p-3 flex gap-2">
-                  <Sparkles className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-muted-foreground">
-                    Atlas is operating in <span className="text-foreground font-medium">supervised</span> mode. All actions require approval before execution. Audit trail logged to Auto Cloud.
-                  </p>
-                </div>
-              </div>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      <AgentforceWidget />
     </div>
   );
 }
@@ -305,37 +221,7 @@ export function Crumb({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function AgentDock() {
-  const { persona, setReasoningOpen } = usePersona();
-  const p = PERSONAS[persona];
-  return (
-    <div className="rounded border hairline bg-card overflow-hidden shadow-card">
-      <div className="px-4 py-2.5 bg-[hsl(var(--slds-brand-dark))] text-white flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-[#FFD60A]" />
-        <div className="text-xs font-semibold">Agentforce</div>
-        <span className="text-[10px] text-white/70">· {p.agentName}</span>
-        <button
-          onClick={() => setReasoningOpen(true)}
-          className="ml-auto text-[10px] uppercase tracking-wider text-white/80 hover:text-white"
-        >
-          Reasoning
-        </button>
-      </div>
-      <div className="p-4 space-y-3">
-        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Suggested next step</div>
-        <div className="rounded bg-secondary p-3 text-sm text-foreground">
-          Want me to draft the next customer touch and queue it for your approval?
-        </div>
-        <div className="flex gap-2">
-          <button className="flex-1 h-8 rounded bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90">Draft for me</button>
-          <button className="h-8 w-8 rounded border hairline bg-card flex items-center justify-center text-muted-foreground hover:text-foreground">
-            <Send className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// AgentDock removed in favor of the floating AgentforceWidget.
 
 export function HighlightsPanel({
   icon: Icon,
