@@ -19,7 +19,9 @@ import {
   Clock,
 } from "lucide-react";
 import { DEALER_SCORECARD } from "@/lib/mazda-mock";
-import { PageHeader, Crumb, AgentDock, HighlightsPanel } from "@/components/MazdaAppShell";
+import { PageHeader, Crumb, HighlightsPanel } from "@/components/MazdaAppShell";
+import { Link } from "react-router-dom";
+import { ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 const DEALER_PROFILE = {
   principal: "Beverly Galpin",
@@ -86,6 +88,12 @@ function PipelineBar({ s }: { s: typeof PIPELINE[number] }) {
 
 export default function DealerScorecardPage() {
   const d = DEALER_SCORECARD;
+  const radarData = d.metrics.slice(0, 6).map((m) => {
+    const num = parseFloat(m.value.replace(/[^0-9.]/g, "")) || 50;
+    const normalized = m.label.includes("CSI") ? num / 10 : m.label.includes("Submit") ? 100 - num * 30 : num;
+    return { metric: m.label.split(" ").slice(0, 2).join(" "), value: Math.min(100, normalized), district: Math.min(100, normalized * 0.85) };
+  });
+  const pipelineData = PIPELINE.map((s) => ({ stage: s.stage, count: s.count }));
   return (
     <div className="px-6 py-8 max-w-[1400px] mx-auto space-y-6">
       <Crumb>Dealer 360 · {d.name}</Crumb>
@@ -140,6 +148,48 @@ export default function DealerScorecardPage() {
             </div>
           </div>
 
+          <div className="grid md:grid-cols-2 gap-6">
+            <section className="rounded border hairline bg-card p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-primary">Performance radar</div>
+                  <h3 className="text-lg mt-1">Galpin vs District median</h3>
+                </div>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData} margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
+                    <PolarGrid stroke="hsl(var(--border))" />
+                    <PolarAngleAxis dataKey="metric" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
+                    <PolarRadiusAxis tick={false} axisLine={false} />
+                    <Radar name="Galpin" dataKey="value" stroke="hsl(var(--soul-red))" fill="hsl(var(--soul-red))" fillOpacity={0.35} />
+                    <Radar name="District" dataKey="district" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground))" fillOpacity={0.15} />
+                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+            <section className="rounded border hairline bg-card p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-primary">Sales pipeline</div>
+                  <h3 className="text-lg mt-1">Stage volume · MTD</h3>
+                </div>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={pipelineData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="stage" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} interval={0} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          </div>
+
           <section>
             <div className="flex items-end justify-between mb-3">
               <div>
@@ -150,7 +200,13 @@ export default function DealerScorecardPage() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {d.metrics.map((m, i) => (
-                <motion.div key={m.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }} className="rounded border hairline bg-card p-4 flex flex-col gap-2">
+                <motion.div
+                  key={m.label}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="rounded border hairline bg-card p-4 flex flex-col gap-2 hover:border-primary hover:shadow-md transition-all cursor-pointer"
+                >
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground leading-tight">{m.label}</div>
                   <div className="text-2xl font-semibold tabular-nums">{m.value}</div>
                   <div className={`text-[11px] inline-flex items-center gap-1 ${m.good ? "text-success" : "text-warning"}`}>
@@ -302,7 +358,6 @@ export default function DealerScorecardPage() {
         </div>
 
         <aside className="space-y-4">
-          <AgentDock />
           <div className="rounded border hairline bg-card p-4 space-y-3">
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">District ranking</div>
             <div className="flex items-baseline gap-2">
@@ -319,6 +374,16 @@ export default function DealerScorecardPage() {
               <div className="flex justify-between"><span className="text-muted-foreground">Recall completion</span><span className="font-medium text-warning">#14</span></div>
             </div>
           </div>
+          <Link to="/leads" className="block rounded border hairline bg-card p-4 hover:border-primary transition-colors">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Jump to</div>
+            <div className="text-sm font-medium mt-1">Lead routing console →</div>
+            <div className="text-xs text-muted-foreground">See live SLA + Einstein scores</div>
+          </Link>
+          <Link to="/household" className="block rounded border hairline bg-card p-4 hover:border-primary transition-colors">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Jump to</div>
+            <div className="text-sm font-medium mt-1">Top household profiles →</div>
+            <div className="text-xs text-muted-foreground">Trade-cycle, LTV, garage</div>
+          </Link>
         </aside>
       </div>
     </div>

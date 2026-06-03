@@ -1,16 +1,26 @@
 import { motion } from "framer-motion";
 import { Sparkles, Check, FileText, Wrench } from "lucide-react";
 import { WARRANTY_DRAFT } from "@/lib/mazda-mock";
-import { PageHeader, Crumb, AgentDock } from "@/components/MazdaAppShell";
+import { PageHeader, Crumb } from "@/components/MazdaAppShell";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { Link } from "react-router-dom";
 
 export default function WarrantyPage() {
+  const partsTotal = WARRANTY_DRAFT.partsRequested.reduce((a, p) => a + parseFloat(p.unit.replace(/[$,]/g, "")) * p.qty, 0);
+  const laborTotal = WARRANTY_DRAFT.laborCodes.reduce((a, l) => a + l.hours * 105, 0);
+  const costBreakdown = [
+    { name: "Parts", value: Math.round(partsTotal), fill: "hsl(var(--primary))" },
+    { name: "Labor", value: Math.round(laborTotal), fill: "hsl(var(--soul-red))" },
+    { name: "Diagnostics", value: 68, fill: "hsl(var(--muted-foreground))" },
+  ];
   return (
-    <div className="px-6 py-8 max-w-7xl mx-auto">
+    <div className="px-6 py-8 max-w-[1400px] mx-auto">
       <Crumb>Warranty Workbench</Crumb>
       <PageHeader
         eyebrow="Owner Support · Service Console"
         title={`Warranty claim ${WARRANTY_DRAFT.claimId}`}
         description={`Triggered by DTC ${WARRANTY_DRAFT.failureCode} on VIN ${WARRANTY_DRAFT.vin} via MyMazda CV stream. Atlas pre-filled against MGWS — review and submit.`}
+        actions={<Link to="/vehicle" className="text-xs px-3 py-2 rounded border hairline hover:border-primary">← Back to vehicle</Link>}
       />
       <div className="grid lg:grid-cols-[1fr_320px] gap-6">
         <div className="space-y-4">
@@ -76,7 +86,40 @@ export default function WarrantyPage() {
             </div>
           </div>
         </div>
-        <aside className="space-y-4"><AgentDock /></aside>
+        <aside className="space-y-4">
+          <div className="rounded border hairline bg-card p-5">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-primary">Cost breakdown</div>
+            <h3 className="text-lg mt-1 mb-3">Claim composition</h3>
+            <div className="h-48 relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={costBreakdown} dataKey="value" innerRadius={55} outerRadius={80} paddingAngle={2}>
+                    {costBreakdown.map((c, i) => <Cell key={i} fill={c.fill} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <div className="text-xl font-semibold">{WARRANTY_DRAFT.estimatedTotal}</div>
+                <div className="text-[10px] text-muted-foreground">total</div>
+              </div>
+            </div>
+            <div className="mt-3 space-y-1.5 text-xs">
+              {costBreakdown.map((c) => (
+                <div key={c.name} className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full" style={{ background: c.fill }} />
+                  <span className="text-muted-foreground flex-1">{c.name}</span>
+                  <span className="font-medium">${c.value.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded border hairline bg-card p-5">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-primary">Avg approval time</div>
+            <div className="text-3xl mt-2">4h 12m</div>
+            <div className="text-xs text-success">−38% vs manual</div>
+          </div>
+        </aside>
       </div>
     </div>
   );
